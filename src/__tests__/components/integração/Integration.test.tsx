@@ -1,49 +1,49 @@
-import React from "react";
-import { render, fireEvent, waitFor, screen } from "@testing-library/react";
-import Search from "../../../components/Search";
-import Providers from "../../../providers";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+
+import App from "../../../App";
 import api from "../../../services";
 import MockAdapter from "axios-mock-adapter";
+import Providers from "../../../providers";
 
 const apiMock = new MockAdapter(api);
 
-describe("Search Page/Component", () => {
-  test("should be able to search", async () => {
-    apiMock.onPost("/cep").replyOnce(200, {});
-
-    render(
-      <Providers>
-        <Search />
-      </Providers>
-    );
-
-    const cep = screen.getByPlaceholderText("Insira o CEP");
-    const buttonElement = screen.getByRole("button");
-
-    fireEvent.change(cep, { target: { value: 88085435 } });
-    fireEvent.click(buttonElement);
-
-    await waitFor(() => {
-      expect(cep).toHaveValue(88085435);
+describe("Searching Cep", () => {
+  it("should be able to return an adress", async () => {
+    apiMock.onGet("88085435").replyOnce(200, {
+      bairro: "Itaguaçu",
+      cep: "88085435",
+      cidade: "Florianópolis",
+      cidade_info: { area_km2: "675,409", codigo_ibge: "4205407" },
+      estado: "SC",
+      estado_info: {
+        area_km2: "95.737,895",
+        codigo_ibge: "42",
+        nome: "Santa Catarina",
+      },
+      logradouro: "Rua João Meirelles",
     });
-  });
-  test("should be able to not search", async () => {
-    apiMock.onPost("/cep").replyOnce(200, {});
 
     render(
       <Providers>
-        <Search />
+        <App />
       </Providers>
     );
 
-    const cepText = screen.getByPlaceholderText("Insira o CEP");
-    const buttonElement = screen.getByRole("button");
+    const inputField = screen.getByPlaceholderText("Insira o CEP");
+    const buttonField = screen.getByRole("button");
 
-    fireEvent.change(cepText, { target: { value: 0 } });
-    fireEvent.click(buttonElement);
+    fireEvent.change(inputField, {
+      target: {
+        value: "88085435",
+      },
+    });
+
+    fireEvent.click(buttonField);
 
     await waitFor(() => {
-      expect(screen.queryByText("Logradouro")).not.toBeInTheDocument();
+      expect(
+        screen.getByDisplayValue("Rua João Meirelles")
+      ).toBeInTheDocument();
     });
   });
 });
